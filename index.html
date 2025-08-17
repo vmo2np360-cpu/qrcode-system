@@ -36,29 +36,22 @@
     </div>
 
     <script>
-        console.log("開始執行 JavaScript...");
-        // 檢查 Firebase SDK 是否載入
-        console.log("檢查 Firebase SDK...");
+        console.log("開始載入 JavaScript...");
+        // 檢查 Firebase SDK
+        console.log("檢查 Firebase SDK 是否載入...");
         if (typeof firebase === 'undefined') {
-            console.error("錯誤：Firebase SDK 未載入！請確認：");
-            console.error("1. 網路連線是否正常（需存取 https://www.gstatic.com/firebasejs/10.12.5/）");
+            console.error("Firebase SDK 未載入！請確認：");
+            console.error("1. 網路連線是否正常（需要存取 https://www.gstatic.com/firebasejs/10.12.5/）");
             console.error("2. 是否使用 VPN 繞過香港網路限制");
-            console.error("3. 瀏覽器快取是否已清除（按 Ctrl+Shift+Delete）");
+            console.error("3. 瀏覽器快取是否已清除");
             document.getElementById('error-msg').innerText = "錯誤：Firebase SDK 未載入，請檢查網路或使用 VPN";
             throw new Error("Firebase SDK 未載入");
         } else {
-            console.log("Firebase SDK 載入成功，版本:", firebase.SDK_VERSION);
+            console.log("Firebase SDK 成功載入，版本:", firebase.SDK_VERSION);
         }
 
-        // Firebase 配置（請從 Firebase Console 複製）
-        <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
+        // Firebase 配置（從 Firebase Console 複製）
+        const firebaseConfig = {
     apiKey: "AIzaSyCgSaPKhaaX9cP1tY-ThykJvo_sJtVyyDc",
     authDomain: "qrcodesystem-bceda.firebaseapp.com",
     databaseURL: "https://qrcodesystem-bceda-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -68,10 +61,6 @@
     appId: "1:253231467455:web:5eb19df93b8b621ec6af0a"
   };
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
-
         // 初始化 Firebase
         let db = null;
         try {
@@ -79,17 +68,17 @@
             firebase.initializeApp(firebaseConfig);
             console.log("Firebase 初始化成功");
             db = firebase.database();
-            console.log("資料庫已定義");
+            console.log("db 已定義");
         } catch (error) {
             console.error("Firebase 初始化失敗:", error);
-            document.getElementById('error-msg').innerText = "錯誤：Firebase 初始化失敗: " + error.message;
+            document.getElementById('error-msg').innerText = "Firebase 初始化失敗: " + error.message;
         }
 
         // 定義 generateQR 函數
         function generateQR() {
-            console.log("執行 generateQR 函數");
+            console.log("generateQR 函數開始執行");
             if (!db) {
-                console.error("錯誤：資料庫未初始化");
+                console.error("db 未定義，無法繼續");
                 document.getElementById('error-msg').innerText = "錯誤：資料庫未初始化，請檢查 Firebase 配置或網路";
                 return;
             }
@@ -103,7 +92,7 @@
                 return;
             }
 
-            console.log("正在生成唯一 ID 並儲存資料");
+            console.log("正在生成唯一 ID 和儲存資料");
             try {
                 const uniqueId = db.ref('records').push().key;
                 db.ref('records/' + uniqueId).set({
@@ -117,8 +106,8 @@
                 }).then(() => {
                     console.log("資料儲存成功，ID:", uniqueId);
                     // 使用 GitHub Pages URL
-                    const url = `https://vmo2np360-cpu.github.io/qrcode-system/third-party.html?id=${uniqueId}`;
-                    console.log("QR Code URL:", url);
+                    const url = `https:///github.com/vmo2np360-cpu/qrcode-system/third-party.html?id=${uniqueId}`;
+                    console.log("生成的 QR Code URL:", url);
                     try {
                         new QRCode(document.getElementById('qrcode'), {
                             text: url,
@@ -129,15 +118,15 @@
                         document.getElementById('print-btn').style.display = 'block';
                     } catch (error) {
                         console.error("QR Code 生成失敗:", error);
-                        document.getElementById('error-msg').innerText = "錯誤：QR Code 生成失敗: " + error.message;
+                        document.getElementById('error-msg').innerText = "QR Code 生成失敗: " + error.message;
                     }
                 }).catch(error => {
                     console.error("資料儲存失敗:", error);
-                    document.getElementById('error-msg').innerText = "錯誤：資料儲存失敗: " + error.message;
+                    document.getElementById('error-msg').innerText = "資料儲存失敗: " + error.message;
                 });
             } catch (error) {
                 console.error("生成唯一 ID 失敗:", error);
-                document.getElementById('error-msg').innerText = "錯誤：生成唯一 ID 失敗: " + error.message;
+                document.getElementById('error-msg').innerText = "生成唯一 ID 失敗: " + error.message;
             }
         }
 
