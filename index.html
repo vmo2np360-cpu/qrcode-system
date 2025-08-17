@@ -3,56 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資料輸入系統</title>
+    <title>第三方檢視資料</title>
     <!-- Firebase CDN（最新版本） -->
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js"></script>
-    <!-- QRCode CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .container { max-width: 600px; margin: auto; }
+        #data { margin-top: 20px; }
+        #error-msg { color: red; }
         input { display: block; margin: 10px 0; padding: 8px; width: 100%; }
         button { padding: 10px; background: #4CAF50; color: white; border: none; cursor: pointer; }
-        #qrcode { margin: 20px 0; text-align: center; }
-        #error-msg { color: red; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>輸入資料</h1>
-        <form id="input-form">
-            <label>纜車車箱號碼:</label>
-            <input type="text" id="carNumber" required>
-            <label>賓客姓名:</label>
-            <input type="text" id="guestName" required>
-            <label>健康狀況:</label>
-            <input type="text" id="healthStatus" required>
-            <button type="button" onclick="generateQR()">生成 QR Code 並儲存</button>
+        <h1>賓客資料</h1>
+        <div id="data"></div>
+        <form id="update-form" style="display: none;">
+            <label>離場方法:</label>
+            <input type="text" id="exitMethod">
+            <label>轉送部門及目的地:</label>
+            <input type="text" id="transferDept">
+            <label>離場時間:</label>
+            <input type="text" id="exitTime">
+            <button type="button" onclick="updateData()">更新資料</button>
         </form>
-        <div id="qrcode"></div>
-        <button id="print-btn" style="display: none;" onclick="printQR()">打印 QR Code</button>
         <p id="error-msg"></p>
     </div>
 
     <script>
-        console.log("開始載入 JavaScript...");
-        // 檢查 Firebase SDK
-        console.log("檢查 Firebase SDK 是否載入...");
+        console.log("開始檢查 Firebase SDK...");
         if (typeof firebase === 'undefined') {
-            console.error("Firebase SDK 未載入！請確認：");
-            console.error("1. 網路連線是否正常（需要存取 https://www.gstatic.com/firebasejs/10.14.1/）");
-            console.error("2. 是否使用 VPN 繞過香港網路限制");
-            console.error("3. 瀏覽器快取是否已清除");
-            console.error("4. 檢查 Chrome 控制台 Network 標籤，確認 firebase-app.js 和 firebase-database.js 的狀態碼");
-            document.getElementById('error-msg').innerText = "錯誤：Firebase SDK 未載入，請檢查網路或使用 VPN";
+            console.error("Firebase SDK 未載入！請確認網路連線或使用 VPN");
+            document.getElementById('error-msg').innerText = "錯誤：Firebase SDK 未載入，請檢查網路連線";
             throw new Error("Firebase SDK 未載入");
         } else {
             console.log("Firebase SDK 成功載入，版本:", firebase.SDK_VERSION);
         }
 
-        // Firebase 配置（從 Firebase Console 複製）
-                const firebaseConfig = {
+        const firebaseConfig = {
             apiKey: "AIzaSyCgSaPKhaaX9cP1tY-ThykJvo_sJtVyyDc",
             authDomain: "qrcodesystem-bceda.firebaseapp.com",
             databaseURL: "https://qrcodesystem-bceda-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -62,81 +52,84 @@
             appId: "1:253231467455:web:5eb19df93b8b621ec6af0a"
         };
 
-        // 初始化 Firebase
-        let db = null;
         try {
             console.log("正在初始化 Firebase...");
             firebase.initializeApp(firebaseConfig);
             console.log("Firebase 初始化成功");
-            db = firebase.database();
+            const db = firebase.database();
             console.log("db 已定義");
+
+            // 從 URL 獲取 ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if (!id) {
+                console.error("無效的 ID");
+                document.getElementById('error-msg').innerText = "錯誤：無效的 ID";
+                return;
+            }
+
+            console.log("正在讀取資料，ID:", id);
+            db.ref('records/' + id).once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (data) {
+                    console.log("資料讀取成功:", data);
+                    document.getElementById('data').innerHTML = `
+                        <p>纜車車箱號碼: ${data.carNumber}</p>
+                        <p>賓客姓名: ${data.guestName}</p>
+                        <p>健康狀況: ${data.healthStatus}</p>
+                        <p>離場方法: ${data.exitMethod || '未設定'}</p>
+                        <p>轉送部門及目的地: ${data.transferDept || '未設定'}</p>
+                        <p>離場時間: ${data.exitTime || '未設定'}</p>
+                    `;
+                    document.getElementById('update-form').style.display = 'block';
+                } else {
+                    console.error("無此資料");
+                    document.getElementById('error-msg').innerText = "錯誤：無此資料";
+                }
+            }).catch(error => {
+                console.error("資料讀取失敗:", error);
+                document.getElementById('error-msg').innerText = "資料讀取失敗: " + error.message;
+            });
+
+            // 更新資料函數
+            function updateData() {
+                const exitMethod = document.getElementById('exitMethod').value;
+                const transferDept = document.getElementById('transferDept').value;
+                const exitTime = document.getElementById('exitTime').value;
+                if (!exitMethod || !transferDept || !exitTime) {
+                    alert('請輸入所有更新資料');
+                    console.log("更新資料未填完整");
+                    return;
+                }
+
+                db.ref('records/' + id).update({
+                    exitMethod: exitMethod,
+                    transferDept: transferDept,
+                    exitTime: exitTime
+                }).then(() => {
+                    console.log("資料更新成功");
+                    document.getElementById('error-msg').innerText = "資料更新成功";
+                    // 重新載入資料
+                    db.ref('records/' + id).once('value').then(snapshot => {
+                        const data = snapshot.val();
+                        document.getElementById('data').innerHTML = `
+                            <p>纜車車箱號碼: ${data.carNumber}</p>
+                            <p>賓客姓名: ${data.guestName}</p>
+                            <p>健康狀況: ${data.healthStatus}</p>
+                            <p>離場方法: ${data.exitMethod}</p>
+                            <p>轉送部門及目的地: ${data.transferDept}</p>
+                            <p>離場時間: ${data.exitTime}</p>
+                        `;
+                    });
+                }).catch(error => {
+                    console.error("資料更新失敗:", error);
+                    document.getElementById('error-msg').innerText = "資料更新失敗: " + error.message;
+                });
+            }
         } catch (error) {
             console.error("Firebase 初始化失敗:", error);
             document.getElementById('error-msg').innerText = "Firebase 初始化失敗: " + error.message;
         }
-
-        // 定義 generateQR 函數
-        function generateQR() {
-            console.log("generateQR 函數開始執行");
-            if (!db) {
-                console.error("db 未定義，無法繼續");
-                document.getElementById('error-msg').innerText = "錯誤：資料庫未初始化，請檢查 Firebase 配置或網路";
-                return;
-            }
-
-            const carNumber = document.getElementById('carNumber').value;
-            const guestName = document.getElementById('guestName').value;
-            const healthStatus = document.getElementById('healthStatus').value;
-            if (!carNumber || !guestName || !healthStatus) {
-                alert('請輸入所有資料');
-                console.log("資料未填完整");
-                return;
-            }
-
-            console.log("正在生成唯一 ID 和儲存資料");
-            try {
-                const uniqueId = db.ref('records').push().key;
-                db.ref('records/' + uniqueId).set({
-                    carNumber: carNumber,
-                    guestName: guestName,
-                    healthStatus: healthStatus,
-                    exitMethod: '',
-                    transferDept: '',
-                    destination: '',
-                    exitTime: ''
-                }).then(() => {
-                    console.log("資料儲存成功，ID:", uniqueId);
-                    // 使用 GitHub Pages URL
-                    const url = `https://vmo2np360-cpu.github.io/qrcode-system/third-party.html?id=${uniqueId}`;
-                    console.log("生成的 QR Code URL:", url);
-                    try {
-                        new QRCode(document.getElementById('qrcode'), {
-                            text: url,
-                            width: 200,
-                            height: 200
-                        });
-                        console.log("QR Code 生成成功");
-                        document.getElementById('print-btn').style.display = 'block';
-                    } catch (error) {
-                        console.error("QR Code 生成失敗:", error);
-                        document.getElementById('error-msg').innerText = "QR Code 生成失敗: " + error.message;
-                    }
-                }).catch(error => {
-                    console.error("資料儲存失敗:", error);
-                    document.getElementById('error-msg').innerText = "資料儲存失敗: " + error.message;
-                });
-            } catch (error) {
-                console.error("生成唯一 ID 失敗:", error);
-                document.getElementById('error-msg').innerText = "生成唯一 ID 失敗: " + error.message;
-            }
-        }
-
-        function printQR() {
-            console.log("正在打印 QR Code");
-            window.print();
-        }
-
-        console.log("generateQR 函數已定義");
     </script>
 </body>
 </html>
