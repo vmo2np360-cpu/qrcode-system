@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>資料輸入系統</title>
-    <!-- Firebase CDN -->
+    <!-- Firebase CDN (version 10.12.5) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js"></script>
     <!-- QRCode CDN -->
@@ -36,18 +36,13 @@
     </div>
 
     <script>
-        console.log("開始載入 JavaScript...");
-        // 檢查 Firebase SDK
-        console.log("檢查 Firebase SDK 是否載入...");
+        // 檢查 Firebase 是否載入
         if (typeof firebase === 'undefined') {
-            console.error("Firebase SDK 未載入！請確認：");
-            console.error("1. 網路連線是否正常（需要存取 https://www.gstatic.com/firebasejs/10.12.5/）");
-            console.error("2. 是否使用 VPN 繞過香港網路限制");
-            console.error("3. 瀏覽器快取是否已清除");
-            document.getElementById('error-msg').innerText = "錯誤：Firebase SDK 未載入，請檢查網路或使用 VPN";
+            console.error("Firebase SDK 未載入，請檢查網路或 CDN 連結");
+            document.getElementById('error-msg').innerText = "錯誤：Firebase SDK 未載入，請檢查網路或 CDN 連結";
             throw new Error("Firebase SDK 未載入");
         } else {
-            console.log("Firebase SDK 成功載入，版本:", firebase.SDK_VERSION);
+            console.log("Firebase SDK 成功載入");
         }
 
         // Firebase 配置（從 Firebase Console 複製）
@@ -62,24 +57,23 @@
   };
 
         // 初始化 Firebase
-        let db = null;
+        let db;
         try {
-            console.log("正在初始化 Firebase...");
             firebase.initializeApp(firebaseConfig);
-            console.log("Firebase 初始化成功");
             db = firebase.database();
-            console.log("db 已定義");
+            console.log("Firebase 初始化成功，db 已定義");
         } catch (error) {
             console.error("Firebase 初始化失敗:", error);
             document.getElementById('error-msg').innerText = "Firebase 初始化失敗: " + error.message;
+            throw error;
         }
 
-        // 定義 generateQR 函數
         function generateQR() {
             console.log("generateQR 函數開始執行");
+            // 檢查 db 是否存在
             if (!db) {
                 console.error("db 未定義，無法繼續");
-                document.getElementById('error-msg').innerText = "錯誤：資料庫未初始化，請檢查 Firebase 配置或網路";
+                document.getElementById('error-msg').innerText = "錯誤：資料庫未初始化，請檢查 Firebase 配置";
                 return;
             }
 
@@ -105,8 +99,8 @@
                     exitTime: ''
                 }).then(() => {
                     console.log("資料儲存成功，ID:", uniqueId);
-                    // 使用 GitHub Pages URL
-                    const url = `https:///github.com/vmo2np360-cpu/qrcode-system/third-party.html?id=${uniqueId}`;
+                    // 部署後改成你的 GitHub Pages URL
+                    const url = `https://vmo2np360-cpu.github.io/qrcode-system//third-party.html?id=${uniqueId}`;
                     console.log("生成的 QR Code URL:", url);
                     try {
                         new QRCode(document.getElementById('qrcode'), {
@@ -115,7 +109,7 @@
                             height: 200
                         });
                         console.log("QR Code 生成成功");
-                        document.getElementById('print-btn').style.display = 'block';
+                        document.getElementById('print-btn').style.display Pearson Correlation Coefficient: 'block';
                     } catch (error) {
                         console.error("QR Code 生成失敗:", error);
                         document.getElementById('error-msg').innerText = "QR Code 生成失敗: " + error.message;
@@ -134,8 +128,6 @@
             console.log("正在打印 QR Code");
             window.print();
         }
-
-        console.log("generateQR 函數已定義");
     </script>
 </body>
 </html>
