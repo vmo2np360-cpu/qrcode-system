@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第三方檢視資料</title>
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        #data { margin-top: 20px; }
+        #error-msg { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>賓客資料</h1>
+        <div id="data"></div>
+        <p id="error-msg"></p>
+    </div>
+
+    <script>
+        console.log("開始檢查 Firebase SDK...");
+        if (typeof firebase === 'undefined') {
+            console.error("Firebase SDK 未載入！請確認網路連線或使用 VPN");
+            document.getElementById('error-msg').innerText = "錯誤：Firebase SDK 未載入，請檢查網路連線";
+            throw new Error("Firebase SDK 未載入");
+        } else {
+            console.log("Firebase SDK 成功載入，版本:", firebase.SDK_VERSION);
+        }
+
+       <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyCgSaPKhaaX9cP1tY-ThykJvo_sJtVyyDc",
+    authDomain: "qrcodesystem-bceda.firebaseapp.com",
+    databaseURL: "https://qrcodesystem-bceda-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "qrcodesystem-bceda",
+    storageBucket: "qrcodesystem-bceda.firebasestorage.app",
+    messagingSenderId: "253231467455",
+    appId: "1:253231467455:web:5eb19df93b8b621ec6af0a"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
+        try {
+            console.log("正在初始化 Firebase...");
+            firebase.initializeApp(firebaseConfig);
+            console.log("Firebase 初始化成功");
+            const db = firebase.database();
+            console.log("db 已定義");
+
+            // 從 URL 獲取 ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if (!id) {
+                console.error("無效的 ID");
+                document.getElementById('error-msg').innerText = "錯誤：無效的 ID";
+                return;
+            }
+
+            console.log("正在讀取資料，ID:", id);
+            db.ref('records/' + id).once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (data) {
+                    console.log("資料讀取成功:", data);
+                    document.getElementById('data').innerHTML = `
+                        <p>纜車車箱號碼: ${data.carNumber}</p>
+                        <p>賓客姓名: ${data.guestName}</p>
+                        <p>健康狀況: ${data.healthStatus}</p>
+                    `;
+                } else {
+                    console.error("無此資料");
+                    document.getElementById('error-msg').innerText = "錯誤：無此資料";
+                }
+            }).catch(error => {
+                console.error("資料讀取失敗:", error);
+                document.getElementById('error-msg').innerText = "資料讀取失敗: " + error.message;
+            });
+        } catch (error) {
+            console.error("Firebase 初始化失敗:", error);
+            document.getElementById('error-msg').innerText = "Firebase 初始化失敗: " + error.message;
+        }
+    </script>
+</body>
+</html>

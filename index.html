@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資料輸入系統</title>
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js"></script>
+    <!-- QRCode CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        input { display: block; margin: 10px 0; padding: 8px; width: 100%; }
+        button { padding: 10px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        #qrcode { margin: 20px 0; text-align: center; }
+        #error-msg { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>輸入資料</h1>
+        <form id="input-form">
+            <label>纜車車箱號碼:</label>
+            <input type="text" id="carNumber" required>
+            <label>賓客姓名:</label>
+            <input type="text" id="guestName" required>
+            <label>健康狀況:</label>
+            <input type="text" id="healthStatus" required>
+            <button type="button" onclick="generateQR()">生成 QR Code 並儲存</button>
+        </form>
+        <div id="qrcode"></div>
+        <button id="print-btn" style="display: none;" onclick="printQR()">打印 QR Code</button>
+        <p id="error-msg"></p>
+    </div>
+
+    <script>
+        // 檢查 Firebase SDK 是否載入
+        console.log("開始檢查 Firebase SDK...");
+        if (typeof firebase === 'undefined') {
+            console.error("Firebase SDK 未載入！請確認：");
+            console.error("1. 網路連線是否正常（需要存取 https://www.gstatic.com/firebasejs/10.12.5/）");
+            console.error("2. 是否使用 VPN 繞過地區限制（例如香港網路可能阻擋 gstatic.com）");
+            console.error("3. 瀏覽器快取是否已清除");
+            document.getElementById('error-msg').innerText = "錯誤：Firebase SDK 未載入，請檢查網路連線或使用 VPN";
+            throw new Error("Firebase SDK 未載入");
+        } else {
+            console.log("Firebase SDK 成功載入，版本:", firebase.SDK_VERSION);
+        }
+
+       <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyCgSaPKhaaX9cP1tY-ThykJvo_sJtVyyDc",
+    authDomain: "qrcodesystem-bceda.firebaseapp.com",
+    databaseURL: "https://qrcodesystem-bceda-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "qrcodesystem-bceda",
+    storageBucket: "qrcodesystem-bceda.firebasestorage.app",
+    messagingSenderId: "253231467455",
+    appId: "1:253231467455:web:5eb19df93b8b621ec6af0a"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
+
+        // 初始化 Firebase
+        let db = null;
+        try {
+            console.log("正在初始化 Firebase...");
+            firebase.initializeApp(firebaseConfig);
+            console.log("Firebase 初始化成功");
+            db = firebase.database();
+            console.log("db 已定義");
+        } catch (error) {
+            console.error("Firebase 初始化失敗:", error);
+            document.getElementById('error-msg').innerText = "Firebase 初始化失敗: " + error.message;
+        }
+
+        function generateQR() {
+            console.log("generateQR 函數開始執行");
+            if (!db) {
+                console.error("db 未定義，無法繼續");
+                document.getElementById('error-msg').innerText = "錯誤：資料庫未初始化，請檢查 Firebase 配置或網路連線";
+                return;
+            }
+
+            const carNumber = document.getElementById('carNumber').value;
+            const guestName = document.getElementById('guestName').value;
+            const healthStatus = document.getElementById('healthStatus').value;
+            if (!carNumber || !guestName || !healthStatus) {
+                alert('請輸入所有資料');
+                console.log("資料未填完整");
+                return;
+            }
+
+            console.log("正在生成唯一 ID 和儲存資料");
+            try {
+                const uniqueId = db.ref('records').push().key;
+                db.ref('records/' + uniqueId).set({
+                    carNumber: carNumber,
+                    guestName: guestName,
+                    healthStatus: healthStatus,
+                    exitMethod: '',
+                    transferDept: '',
+                    destination: '',
+                    exitTime: ''
+                }).then(() => {
+                    console.log("資料儲存成功，ID:", uniqueId);
+                    // 部署後使用 GitHub Pages URL
+                    const url = `https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPOSITORY_NAME/third-party.html?id=${uniqueId}`;
+                    console.log("生成的 QR Code URL:", url);
+                    try {
+                        new QRCode(document.getElementById('qrcode'), {
+                            text: url,
+                            width: 200,
+                            height: 200
+                        });
+                        console.log("QR Code 生成成功");
+                        document.getElementById('print-btn').style.display = 'block';
+                    } catch (error) {
+                        console.error("QR Code 生成失敗:", error);
+                        document.getElementById('error-msg').innerText = "QR Code 生成失敗: " + error.message;
+                    }
+                }).catch(error => {
+                    console.error("資料儲存失敗:", error);
+                    document.getElementById('error-msg').innerText = "資料儲存失敗: " + error.message;
+                });
+            } catch (error) {
+                console.error("生成唯一 ID 失敗:", error);
+                document.getElementById('error-msg').innerText = "生成唯一 ID 失敗: " + error.message;
+            }
+        }
+
+        function printQR() {
+            console.log("正在打印 QR Code");
+            window.print();
+        }
+    </script>
+</body>
+</html>
+
